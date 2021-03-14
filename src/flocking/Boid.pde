@@ -1,35 +1,52 @@
 class Boid {
-  Position p;    // position x, y at center
-  Velocity v;     // velocity x, y
+  point p;    // point x, y at center
+  vector v;     // vector x, y
   color fill;    
   color outline;
   float r;  // radius of bounding circle
+  float a;  // angle of triangle
   
   Boid() {
     p = p(0, 0);
   }
   
-  Boid(Position p, Velocity v, float r) {
+  Boid(point p, vector v, float r) {
     this.p = p;
     this.v = v;
     this.r = r;
   }
   
-  // Draw boid at current position facing in the direction of velocity.
+  // Draw boid at current point facing in the direction of vector.
   void show() {
-    //fill(fill);
-    //stroke(outline);
-    println("px " + p.x + " py " + p.y);
+    // Bounding circle.
     noFill();
     stroke(light_grey);
     circle(p.x, p.y, r);
+    
+    // Boid.
+    fill(fill);
+    stroke(outline);
+    
+    // Calculate boid triangle.
+    vector u = u(v);
+    int x1 = round(p.x + r * v.x);
+    int y1 = round(p.y + r * v.y);
+    vector iu = i(u);
+    float a = this.a/2;
+    vector u2 = r(iu, a);
+    int x2 = round(p.x + r * v.x);
+    int y2 = 
+    a = -a;
+    int x3 = 
+    int y3 = 
+    triangle(x1, y1, x2, y2, x3, y3);
   }
   
-  // Update position and velocity by 1 timestep.
+  // Update point and vector by 1 timestep.
   void update() {}
   
   // Does the boid contain this point?
-  boolean contains(Position p) {
+  boolean contains(point p) {
     return d(this.p, p) <= r;
   }
 }
@@ -47,7 +64,7 @@ class Flock {
   
   // Spawn a random boid.
   Boid spawn(float r) {
-    return spawn(random_valid_position(r), r);
+    return spawn(random_valid_point(r), r);
   }
   
   Boid spawn(Boid b) {
@@ -55,9 +72,9 @@ class Flock {
     return b;
   }
   
-  Boid spawn(Position p, float r) {
+  Boid spawn(point p, float r) {
     if (this.contains(p)) return null; // Don't spawn a boid over an existing boid.
-    Boid b = new Boid(p, new Velocity(), r);
+    Boid b = new Boid(p, v(), r);
     return spawn(b);
   }
   
@@ -76,7 +93,7 @@ class Flock {
   
   boolean kill(int x, int y) {
     for (Boid b: flock) {
-      if (b.contains(new Position(x, y))) {
+      if (b.contains(p(x, y))) {
         return flock.remove(b);
       }
     }
@@ -85,7 +102,7 @@ class Flock {
   
   void scatter() {
     for (Boid b : flock) {
-      b.p = random_valid_position(b.r);
+      b.p = random_valid_point(b.r);
     }
   }
   
@@ -101,66 +118,23 @@ class Flock {
     }
   }
   
-  boolean contains(Position p) {
+  boolean contains(point p) {
     for (Boid b : flock) {
       if (b.contains(p)) return true;
     }
     return false;
   }
   
-  // Random position that does not overlap with any boids.
-  Position random_valid_position(float r) {
+  // Random point that does not overlap with any boids.
+  point random_valid_point(float r) {
     int x;
     int y;
-    Position p;
+    point p;
     do {
       x = floor(random(0 + r, max_x - r));
       y = floor(random(0 + r, max_y - r));
-      p = new Position(x, y);
+      p = p(x, y);
     } while (this.contains(p));
     return p;
   }
-}
-
-class Position {
-  float x;
-  float y;
-  
-  Position(float x, float y) {
-    this.x = x;
-    this.y = y;
-  }
-}
-
-class Velocity {
-  float x;
-  float y;
-  
-  // Random velocity
-  Velocity() {
-    this.x = random(min_v, max_v);
-    this.y = random(min_v, max_v);
-  }
-  
-  Velocity(float x, float y) {
-    this.x = x;
-    this.y = y;
-  }
-}
-
-Velocity v() {
-  return new Velocity();
-}
-
-Velocity v(float x, float y) {
-  return new Velocity(x, y);
-}
-
-Position p(float x, float y) {
-  return new Position(x, y);
-}
-
-// Distance between a and b.
-float d(Position a, Position b) {
-  return sqrt(sq(a.x - b.x) + sq(a.y - b.y));
 }
