@@ -32,6 +32,10 @@ vector v(float x, float y) {
   return new vector(x, y);
 }
 
+vector v(point p) {
+  return new vector(p.x, p.y);
+}
+
 // Unit vector.
 vector u(vector v) {
   float m = m(v);
@@ -72,10 +76,15 @@ float d(point a, point b) {
   return sqrt(sq(a.x - b.x) + sq(a.y - b.y));
 }
 
-point add(point p, vector v) {
+// Multiply v by m.
+vector product(vector v, float m) {
+  return v(v.x * m, v.y * m);
+}
+
+point sum(point p, vector v) {
   return p(p.x + v.x, p.y + v.y);
 }
 
-vector add(vector a, vector b) {
+vector sum(vector a, vector b) {
   return v(a.x + b.x, a.y + b.y);
 }

@@ -1,19 +1,22 @@
+float boid_r = 50; // radius of the boids
+float boid_a = PI/8; // angle of boid triangle.
 class Boid {
   point p;    // point x, y at center
-  vector v;     // vector x, y
-  color fill;    
-  color outline;
-  float r;  // radius of bounding circle
-  float a;  // angle of triangle
+  vector v;     // velocity x, y
+  color fill = orange;    
+  color outline = dark_orange;
+  float r = boid_r;  // radius of bounding circle
+  float o;  // angle of triangle
+  vector a = v(0, 0); // acceleration x, y
   
   Boid() {
     p = p(0, 0);
   }
   
-  Boid(point p, vector v, float r) {
+  Boid(point p) {
     this.p = p;
-    this.v = v;
-    this.r = r;
+    this.v = v(); // Initialize to random velocity.
+    this.o = boid_a;
   }
   
   // Draw boid at current point facing in the direction of vector.
@@ -21,29 +24,32 @@ class Boid {
     // Bounding circle.
     noFill();
     stroke(light_grey);
-    circle(p.x, p.y, r);
+    circle(p.x, p.y, r*2);
     
-    // Boid.
-    fill(fill);
-    stroke(outline);
+    stroke(black);
+    fill(black);
+    circle(p.x, p.y, 10);
     
     // Calculate boid triangle.
     vector u = u(v);
-    int x1 = round(p.x + r * v.x);
-    int y1 = round(p.y + r * v.y);
+    point a = sum(p, product(u, r));
     vector iu = i(u);
-    float a = this.a/2;
-    vector u2 = r(iu, a);
-    int x2 = round(p.x + r * v.x);
-    int y2 = 
-    a = -a;
-    int x3 = 
-    int y3 = 
-    triangle(x1, y1, x2, y2, x3, y3);
+    vector u2 = r(iu, o);
+    point b = sum(p, product(u2, r));
+    o = -o;
+    vector u3 = r(iu, o);
+    point c = sum(p, product(u3, r));
+    
+    fill(fill);
+    stroke(outline);
+    triangle(a.x, a.y, b.x, b.y, c.x, c.y);
   }
   
   // Update point and vector by 1 timestep.
-  void update() {}
+  void update(float dt) {
+    v = sum(v, product(a, dt));
+    p = sum(p, product(v, dt));
+  }
   
   // Does the boid contain this point?
   boolean contains(point p) {
@@ -64,7 +70,7 @@ class Flock {
   
   // Spawn a random boid.
   Boid spawn(float r) {
-    return spawn(random_valid_point(r), r);
+    return spawn(random_valid_point(r));
   }
   
   Boid spawn(Boid b) {
@@ -72,9 +78,9 @@ class Flock {
     return b;
   }
   
-  Boid spawn(point p, float r) {
+  Boid spawn(point p) {
     if (this.contains(p)) return null; // Don't spawn a boid over an existing boid.
-    Boid b = new Boid(p, v(), r);
+    Boid b = new Boid(p);
     return spawn(b);
   }
   
@@ -112,9 +118,9 @@ class Flock {
     }
   }
   
-  void update() {
+  void update(float dt) {
     for (Boid b : flock){
-      b.update();
+      b.update(dt);
     }
   }
   

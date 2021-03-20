@@ -21,11 +21,6 @@
 // * Spawn and Kill:
 //   - +/= - Spawn (add one new boid to the simulation) (up to 100)
 //   - (minus sign) - Kill (Remove one boid from the simulation) (down to 0).
-//
-// ### Custom Commands:
-// * right mouse held down - do the opposite of the left mouse (repulsion in attraction mode, attraction in repulsion mode)
-// * left click - spawn a boid at the mouse's position
-// * right click - delete the boid at the mouse's position
 // 
 // Extras:
 // 
@@ -35,6 +30,11 @@
 // * Include fixed collision objects for the creatures to steer around.
 // * food/resources/shelter
 // * another species of non predatory boids.
+// * Use a grid or Voronoi/Dalauney triangles to only consider the closest neighborhood of boids.
+// * ### Custom Commands:
+// * right mouse held down - do the opposite of the left mouse (repulsion in attraction mode, attraction in repulsion mode)
+// * left click (or s?) - spawn a boid at the mouse's position
+// * right click (or k?) - delete the boid at the mouse's position
 // 
 
 // Simulation Parameters
@@ -45,14 +45,14 @@ boolean pathing = false;
 // Colours.
 color black = #000000;
 color white = #ffffff;
-color light_grey = #cccccc;
 color orange = #ff6600;
-color dark_orange = #cc5200;
+color dark_orange = #993d00;
+color light_grey = #cccccc;
 color aqua = #00ffff;
 
 // Flock
 Flock flock = new Flock();
-int initial_size = 16;
+int initial_size = 1;
 
 int max_x = 1150;
 int max_y = 850;
@@ -66,7 +66,6 @@ float ca = 0;
 boolean wandering = true;
 float w = 0;
 
-float boid_r = 20; // radius of the boids
 float min_v = 0;
 float max_v = 50;
 
@@ -88,7 +87,8 @@ void draw() {
   }
   flock.show();
   if (running) {
-    flock.update();
+    float dt = 1;
+    flock.update(dt);
   }
 }
 
