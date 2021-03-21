@@ -49,6 +49,7 @@ color orange = #ff6600;
 color dark_orange = #993d00;
 color light_grey = #cccccc;
 color aqua = #00ffff;
+color red = #ef0000;
 
 // Flock
 Flock flock = new Flock();
@@ -57,17 +58,17 @@ int initial_size = 1;
 int max_x = 1150;
 int max_y = 850;
 
-boolean flock_centering = true;
-float fc = .2;
-boolean velocity_matching = true;
-float vm = .2;
-boolean collision_avoidance = true;
-float ca = .5;
-boolean wandering = true;
-float w = .1;
+boolean flock_centering = false;
+float w_fc = .2; // weight for flock centering
+boolean velocity_matching = false;
+float w_vm = .2; // weight for velocity matching
+boolean collision_avoidance = false;
+float w_ca = 100000; // weight for collision avoidance
+boolean wander = false;
+float w_w = .1;  // weight for wander
 
 float min_v = 0;
-float max_v = 50;
+float max_v = 5;
 
 void setup() {
   size(1350, 850);
@@ -133,7 +134,7 @@ void keyPressed() {
       collision_avoidance = !collision_avoidance;
       break;
     case '4':
-      wandering = !wandering;
+      wander = !wander;
       break;
     case '+':
     case '=':

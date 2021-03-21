@@ -1,13 +1,3 @@
-class point {
-  float x;
-  float y;
-  
-  point(float x, float y) {
-    this.x = x;
-    this.y = y;
-  }
-}
-
 class vector {
   float x;
   float y;
@@ -24,16 +14,34 @@ class vector {
   }
 }
 
+class point extends vector {
+  point() {
+    this.x = 0;
+    this.y = 0;
+  }
+  point(float x, float y) {
+    super(x, y);
+  }
+}
+
 vector v() {
   return new vector();
+}
+
+point p() {
+  return new point();
 }
 
 vector v(float x, float y) {
   return new vector(x, y);
 }
 
-vector v(point p) {
-  return new vector(p.x, p.y);
+point p(float x, float y) {
+  return new point(x, y);
+}
+
+point p(vector v) {
+  return p(v.x, v.y);
 }
 
 // Unit vector.
@@ -67,22 +75,14 @@ vector s(vector v, float s) {
   return v(v.x * s, v.y * s);
 }
 
-point p(float x, float y) {
-  return new point(x, y);
-}
-
 // Distance between a and b.
-float d(point a, point b) {
+float d(vector a, vector b) {
   return sqrt(sq(a.x - b.x) + sq(a.y - b.y));
 }
 
 // Multiply v by m.
-vector product(vector v, float m) {
+vector prod(vector v, float m) {
   return v(v.x * m, v.y * m);
-}
-
-point sum(point p, vector v) {
-  return p(p.x + v.x, p.y + v.y);
 }
 
 vector sum(vector a, vector b) {
