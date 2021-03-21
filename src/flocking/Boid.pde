@@ -188,7 +188,7 @@ class Flock {
     float d_y = abs(p.y - wall_y);
     
     float min_d = min(d_x, d_y);
-    float wall_w = (min_d <= boid_p)? 1/sq(min_d) : 0;
+    float wall_w = (min_d <= boid_p)? min_d : 0;
     
     vector wall_f = v(0, 0);
     wall_f.x = (d_x <= boid_p)? p.x - wall_x : 0;
@@ -211,7 +211,7 @@ class Flock {
   // The weight to give a influencing b or vice versa.
   // 1/distance^2
   float weight(Boid a, Boid b) {
-    return 1/sq(d(a.p, b.p));
+    return d(a.p, b.p);
   }
   
   boolean contains(point p) {
