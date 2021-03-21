@@ -1,5 +1,6 @@
-float boid_r = 50; // radius of the boids
+float boid_r = 50;   // radius of the boids
 float boid_a = PI/8; // angle of boid triangle.
+float boid_p = 100;  // radius of boid perception
 class Boid {
   point p;    // point x, y at center
   vector v;     // velocity x, y
@@ -7,7 +8,6 @@ class Boid {
   color outline = dark_orange;
   float r = boid_r;  // radius of bounding circle
   float o;  // angle of triangle
-  vector a = v(0, 0); // acceleration x, y
   
   Boid() {
     p = p(0, 0);
@@ -43,12 +43,6 @@ class Boid {
     fill(fill);
     stroke(outline);
     triangle(a.x, a.y, b.x, b.y, c.x, c.y);
-  }
-  
-  // Update point and vector by 1 timestep.
-  void update(float dt) {
-    v = sum(v, product(a, dt));
-    p = sum(p, product(v, dt));
   }
   
   // Does the boid contain this point?
@@ -120,8 +114,31 @@ class Flock {
   
   void update(float dt) {
     for (Boid b : flock){
-      b.update(dt);
+      update(b, dt);
     }
+  }
+  
+  // Update point and vector by 1 timestep.
+  void update(Boid b, float dt) {
+    vector f = v(0, 0);
+    
+    vector ffc = v(0, 0);
+    vector fvm = v(0, 0);
+    vector fca = v(0, 0);
+    vector fw = v(0, 0);
+    
+    for (Boid n: neighbors(b)) {
+      // Get forces for n.
+    }
+    
+    b.v = sum(b.v, product(f, dt));
+    b.p = sum(b.p, product(b.v, dt));
+  }
+  
+  ArrayList<Boid> neighbors(Boid b) {
+    ArrayList<Boid> neighbors = new ArrayList<Boid>();
+    // Find neighbors at perception distance of b.
+    return neighbors;
   }
   
   boolean contains(point p) {

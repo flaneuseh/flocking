@@ -58,13 +58,13 @@ int max_x = 1150;
 int max_y = 850;
 
 boolean flock_centering = true;
-float fc = 0;
+float fc = .2;
 boolean velocity_matching = true;
-float vm = 0;
+float vm = .2;
 boolean collision_avoidance = true;
-float ca = 0;
+float ca = .5;
 boolean wandering = true;
-float w = 0;
+float w = .1;
 
 float min_v = 0;
 float max_v = 50;
