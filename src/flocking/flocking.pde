@@ -63,8 +63,8 @@ float w_fc = .2; // weight for flock centering
 boolean velocity_matching = false;
 float w_vm = .2; // weight for velocity matching
 boolean collision_avoidance = false;
-float w_ca = 100000; // weight for collision avoidance
-boolean wander = false;
+float w_ca = .5; // weight for collision avoidance
+boolean wander = true;
 float w_w = .1;  // weight for wander
 
 float min_v = 0;
@@ -88,7 +88,6 @@ void draw() {
   }
   flock.show();
   if (running) {
-    float dt = 1;
     flock.update(dt);
   }
 }

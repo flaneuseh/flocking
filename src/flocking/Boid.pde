@@ -1,6 +1,6 @@
 float boid_r = 50;   // radius of the boids
 float boid_a = PI/8; // angle of boid triangle.
-float boid_p = 500;  // radius of boid perception
+float boid_p = 200;  // radius of boid perception
 class Boid {
   point p;    // point x, y at center
   vector v;     // velocity x, y
@@ -55,6 +55,7 @@ class Boid {
   }
 }
 
+float dt = .5;
 class Flock {
   ArrayList<Boid> flock;
   
@@ -116,8 +117,10 @@ class Flock {
       
       vector force_on_b = calculate_forces(b);
       vector force_from_b = sum(b.p, force_on_b);
-      stroke(red);
+      stroke(black);
       line(b.p.x, b.p.y, force_from_b.x, force_from_b.y);
+      vector velocity_from_b = sum(b.p, b.v);
+      line(b.p.x, b.p.y, velocity_from_b.x, velocity_from_b.y);
     }
   }
   
@@ -181,14 +184,14 @@ class Flock {
     boolean closer_to_x0 = abs(p.x - 0) < abs(p.x - max_x);
     float wall_x = closer_to_x0? 0 : max_x;
     
-    boolean closer_to_y0 = abs(p.x - 0) < abs(p.x - max_y);
+    boolean closer_to_y0 = abs(p.y - 0) < abs(p.y - max_y);
     float wall_y = closer_to_y0? 0 : max_y;
     
     float d_x = abs(p.x - wall_x);
     float d_y = abs(p.y - wall_y);
     
     float min_d = min(d_x, d_y);
-    float wall_w = (min_d <= boid_p)? min_d : 0;
+    float wall_w = (min_d <= boid_p)? 10./sq(min_d) : 0; // boid_p - min_d : 0;
     
     vector wall_f = v(0, 0);
     wall_f.x = (d_x <= boid_p)? p.x - wall_x : 0;
@@ -211,7 +214,7 @@ class Flock {
   // The weight to give a influencing b or vice versa.
   // 1/distance^2
   float weight(Boid a, Boid b) {
-    return d(a.p, b.p);
+    return 10./sq(d(a.p, b.p)); // boid_p - d(a.p, b.p);
   }
   
   boolean contains(point p) {
