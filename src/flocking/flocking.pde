@@ -12,6 +12,7 @@
 // -   r - Switch to repulsion mode.
 // * s - Cause all boids to be instantly scattered to random positions in the window, and with random directions.
 // * p - Toggle whether to have creatures leave a path, that is, whether the window is cleared each display step or not (default off).
+// When pathing leave a trail of dots or fading trail. Do not preserve the entire path, as that quickly clutters the window.
 // * c - Clear the screen, but do not delete any boids. (This can be useful when creatures are leaving paths.)
 // * 1-4 - Toggle forces on/off (default on):
 //   - 1 - flock centering 
@@ -35,6 +36,7 @@
 // * right mouse held down - do the opposite of the left mouse (repulsion in attraction mode, attraction in repulsion mode)
 // * left click (or s?) - spawn a boid at the mouse's position
 // * right click (or k?) - delete the boid at the mouse's position
+// * boid colour variation
 // 
 
 // Simulation Parameters
@@ -53,22 +55,15 @@ color red = #ef0000;
 
 // Flock
 Flock flock = new Flock();
-int initial_size = 1;
+int initial_size = 16;
 
 int max_x = 1150;
 int max_y = 850;
 
 boolean flock_centering = false;
-float w_fc = .2; // weight for flock centering
 boolean velocity_matching = false;
-float w_vm = .2; // weight for velocity matching
-boolean collision_avoidance = false;
-float w_ca = .5; // weight for collision avoidance
+boolean collision_avoidance = true;
 boolean wander = true;
-float w_w = .1;  // weight for wander
-
-float min_v = 0;
-float max_v = 5;
 
 void setup() {
   size(1350, 850);
@@ -125,15 +120,19 @@ void keyPressed() {
       break;
     case '1':
       flock_centering = !flock_centering;
+      println("Toggle flock centering " + (collision_avoidance? "on" : "off"));
       break;
     case '2':
       velocity_matching = !velocity_matching;
+      println("Toggle velocity matching " + (collision_avoidance? "on" : "off"));
       break;
     case '3':
       collision_avoidance = !collision_avoidance;
+      println("Toggle collision avoidance " + (collision_avoidance? "on" : "off"));
       break;
     case '4':
       wander = !wander;
+      println("Toggle wander " + (collision_avoidance? "on" : "off"));
       break;
     case '+':
     case '=':

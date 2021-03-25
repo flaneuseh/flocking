@@ -1,6 +1,15 @@
-float boid_r = 50;   // radius of the boids
+float boid_r = 20;   // radius of the boids
 float boid_a = PI/8; // angle of boid triangle.
-float boid_p = 200;  // radius of boid perception
+float boid_p = 100;  // radius of boid perception
+
+float min_v = 1; // Prevent boids from becoming stuck anywhere by setting a low minimum velocity to help them to jiggle out of place.
+float max_v = 10;
+
+float w_fc = .2; // weight for flock centering
+float w_vm = .2; // weight for velocity matching
+float w_ca = .5; // weight for collision avoidance
+float w_w = .1;  // weight for wander
+
 class Boid {
   point p;    // point x, y at center
   vector v;     // velocity x, y
@@ -22,17 +31,19 @@ class Boid {
   // Draw boid at current vector facing in the direction of vector.
   void show() {
     // Bounding circle.
-    noFill();
-    stroke(light_grey);
-    circle(p.x, p.y, r*2);
+    //noFill();
+    //stroke(light_grey);
+    //circle(p.x, p.y, r*2);
     
     // Perception circle.
     stroke(white);
+    noFill();
     circle(p.x, p.y, boid_p*2);
     
-    stroke(black);
-    fill(black);
-    circle(p.x, p.y, 10);
+    // True location (center of boid)
+    //stroke(black);
+    //fill(black);
+    //circle(p.x, p.y, 10);
     
     // Boid representation.
     vector u = u(v);
@@ -115,12 +126,12 @@ class Flock {
     for (Boid b : flock){
       b.show();
       
-      vector force_on_b = calculate_forces(b);
-      vector force_from_b = sum(b.p, force_on_b);
-      stroke(black);
-      line(b.p.x, b.p.y, force_from_b.x, force_from_b.y);
-      vector velocity_from_b = sum(b.p, b.v);
-      line(b.p.x, b.p.y, velocity_from_b.x, velocity_from_b.y);
+      //vector force_on_b = calculate_forces(b);
+      //vector force_from_b = sum(b.p, force_on_b);
+      //stroke(black);
+      //line(b.p.x, b.p.y, force_from_b.x, force_from_b.y);
+      //vector velocity_from_b = sum(b.p, b.v);
+      //line(b.p.x, b.p.y, velocity_from_b.x, velocity_from_b.y);
     }
   }
   
@@ -144,6 +155,12 @@ class Flock {
     }
     
     b.p = p(sum(b.p, prod(b.v, dt)));
+    
+    // Force boid back into boundaries if it escapes.
+    if (b.p.x < 0) b.p.x = b.r*2;
+    if (b.p.y < 0) b.p.y = b.r*2;
+    if (b.p.x > max_x) b.p.x = max_x - b.r*2;
+    if (b.p.y > max_y) b.p.y = max_y - b.r*2;
   }
   
   // Calculate forces acting on b.
@@ -173,7 +190,6 @@ class Flock {
     
     // avoid walls
     f = sum(f, prod(wall_force(b), w_ca));
-    
     return f;
   }
   
@@ -191,7 +207,7 @@ class Flock {
     float d_y = abs(p.y - wall_y);
     
     float min_d = min(d_x, d_y);
-    float wall_w = (min_d <= boid_p)? 10./sq(min_d) : 0; // boid_p - min_d : 0;
+    float wall_w = (min_d <= boid_p)? 50./sq(min_d) : 0;
     
     vector wall_f = v(0, 0);
     wall_f.x = (d_x <= boid_p)? p.x - wall_x : 0;
@@ -205,6 +221,7 @@ class Flock {
     ArrayList<Boid> neighbors = new ArrayList<Boid>();
     for (Boid n: flock) {
       if (d(n.p, b.p) <= boid_p + n.r) {
+        // Is any part of n in b's perception radius?
         neighbors.add(n);
       }
     }
@@ -224,16 +241,11 @@ class Flock {
     return false;
   }
   
-  // Random point that does not overlap with any boids.
+  // Random point within the boundaries and respecting the r of the boid.
   point random_valid_point(float r) {
-    int x;
-    int y;
-    point p;
-    do {
-      x = floor(random(0 + r, max_x - r));
-      y = floor(random(0 + r, max_y - r));
-      p = p(x, y);
-    } while (this.contains(p));
-    return p;
+    return p(
+      floor(random(0 + r, max_x - r)),
+      floor(random(0 + r, max_y - r))
+    );
   }
 }

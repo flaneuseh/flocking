@@ -4,8 +4,8 @@ class vector {
   
   // Random vector
   vector() {
-    this.x = random(min_v, max_v);
-    this.y = random(min_v, max_v);
+    x = random(min_v, max_v);
+    y = random(min_v, max_v);
   }
   
   vector(float x, float y) {
@@ -77,6 +77,7 @@ vector s(vector v, float s) {
 
 // Distance between a and b.
 float d(vector a, vector b) {
+  println("a = " + a.x + ", " + a.y + "; b = " + b.x + ", " + b.y);
   return sqrt(sq(a.x - b.x) + sq(a.y - b.y));
 }
 
