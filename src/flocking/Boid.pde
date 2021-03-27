@@ -9,7 +9,7 @@ float w_fc = .025; // weight for flock centering
 float w_vm = .001; // weight for velocity matching
 float w_ca = 5; // weight for collision avoidance
 float w_wa = 25; // weight for wall avoidance
-float w_w = 1;  // weight for wander
+float w_w = 10;  // weight for wander
 float w_m = .001; // weight for mouse attraction/repulsion.
 
 class Boid {
@@ -180,7 +180,7 @@ class Flock {
     
     sum_wfc = max(sum_wfc, .001); // Ensure against division by 0.
     vector f_fc = prod(sum_fc, 1 / sum_wfc); // flock centering
-    vector f_w = v(random(-1, 1), random(-1, 1)); // wander
+    vector f_w = v(random(-.1, .1), random(-.1, .1)); // wander
     
     if (flock_centering)     f = sum(f, prod(f_fc, w_fc));
     if (velocity_matching)   f = sum(f, prod(f_vm, w_vm));
@@ -194,11 +194,10 @@ class Flock {
     point mouse_loc = p(mouseX, mouseY);
     if (mousePressed && d(mouse_loc, b.p) <= boid_p) {
       vector force_dir;
-      if ((attraction && mouseButton == LEFT) || (!attraction && mouseButton == RIGHT)) { 
-        // attraction left or repulsion right: attraction
+      if (attracting()) { 
         force_dir = sum(mouse_loc, i(b.p));
       }
-      else { // repulsion left or attraction right: repulsion
+      else { 
         force_dir = sum(b.p, i(mouse_loc));
       }
       

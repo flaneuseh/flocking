@@ -55,7 +55,8 @@ color orange = #ff6600;
 color dark_orange = #993d00;
 color light_grey = #cccccc;
 color aqua = #00ffff;
-color red = #ef0000;
+color red = #ff0000;
+color green = #00802b;
 
 // Flock
 Flock flock = new Flock();
@@ -72,9 +73,6 @@ boolean wander = false;
 void setup() {
   size(1350, 850);
   surface.setTitle("BOIDS!");
-  fill(white);
-  noStroke();
-  rect(1150, 0, 200, 850);
   clear_paths();
   for (int i = 0; i < initial_size; i++) {
     flock.spawn(boid_r);
@@ -83,10 +81,36 @@ void setup() {
 
 void draw() {
   paint_background(pathing);
+  show_mouse();
+  show_controls();
   flock.show();
   if (running) {
     flock.update(dt);
   }
+}
+
+void show_mouse() {
+  if (mousePressed) {
+    color c;
+    if (attracting()) { 
+      // attraction left or repulsion right: attraction
+      c = green;
+    }
+    else { // repulsion left or attraction right: repulsion
+      c = red;
+    }
+    
+    int alpha = pathing? 20 : 130;
+    fill(c, alpha);
+    noStroke();
+    circle(mouseX, mouseY, boid_p*2);
+  }
+}
+
+boolean attracting() {
+  // attraction left or repulsion right: attraction
+  // repulsion left or attraction right: repulsion
+  return (attraction && mouseButton == LEFT) || (!attraction && mouseButton == RIGHT);
 }
 
 void paint_background (boolean pathing) {
@@ -94,6 +118,20 @@ void paint_background (boolean pathing) {
   if (pathing) fill(aqua, alpha_p);
   else fill(aqua);
   rect(0, 0, max_x, max_y);
+}
+
+int min_cx = max_x;
+int min_cy = 0;
+int max_cx = 1350;
+int max_cy = max_y;
+void show_controls() {
+  fill(white);
+  stroke(black);
+  rect(min_cx, min_cy, max_cx - min_cx, max_cy);
+  
+  fill(black);
+  textSize(16);
+  text("CONTROLS", min_cx + 10, min_cy + 30);
 }
 
 void clear_paths() {
