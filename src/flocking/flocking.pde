@@ -62,8 +62,8 @@ int max_y = 850;
 
 boolean flock_centering = false;
 boolean velocity_matching = false;
-boolean collision_avoidance = true;
-boolean wander = true;
+boolean collision_avoidance = false;
+boolean wander = false;
 
 void setup() {
   size(1350, 850);
@@ -120,11 +120,11 @@ void keyPressed() {
       break;
     case '1':
       flock_centering = !flock_centering;
-      println("Toggle flock centering " + (collision_avoidance? "on" : "off"));
+      println("Toggle flock centering " + (flock_centering? "on" : "off"));
       break;
     case '2':
       velocity_matching = !velocity_matching;
-      println("Toggle velocity matching " + (collision_avoidance? "on" : "off"));
+      println("Toggle velocity matching " + (velocity_matching? "on" : "off"));
       break;
     case '3':
       collision_avoidance = !collision_avoidance;

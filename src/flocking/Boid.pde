@@ -1,13 +1,14 @@
 float boid_r = 20;   // radius of the boids
 float boid_a = PI/8; // angle of boid triangle.
-float boid_p = 100;  // radius of boid perception
+float boid_p = 150;  // radius of boid perception
 
-float min_v = 1; // Prevent boids from becoming stuck anywhere by setting a low minimum velocity to help them to jiggle out of place.
+float min_v = 5; // Prevent boids from becoming stuck anywhere by setting a low minimum velocity to help them to jiggle out of place.
 float max_v = 10;
 
 float w_fc = .2; // weight for flock centering
-float w_vm = .2; // weight for velocity matching
-float w_ca = .5; // weight for collision avoidance
+float w_vm = .00001; // weight for velocity matching
+float w_ca = 15; // weight for collision avoidance
+float w_wa = 25; // weight for wall avoidance
 float w_w = .1;  // weight for wander
 
 class Boid {
@@ -176,7 +177,7 @@ class Flock {
       float w = weight(n, b);
       sum_w += w;
       sum_fc = sum(sum_fc, prod(sum(n.p, i(b.p)), w)); // sum_fc += w(pi - p)
-      f_vm = sum(f_vm, prod(sum(n.v, i(b.v)), w));     // f_vm += w(vi - v)
+      f_vm = sum(f_vm, prod(sum(n.v, i(b.v)), weight_vm(n, b)));     // f_vm += w(vi - v)
       f_ca = sum(f_ca, prod(sum(b.p, i(n.p)), w));     // f_ca += w(p - pi)
     }
     
@@ -189,7 +190,7 @@ class Flock {
     if (wander)              f = sum(f, prod(f_w, w_w));
     
     // avoid walls
-    f = sum(f, prod(wall_force(b), w_ca));
+    f = sum(f, prod(wall_force(b), w_wa));
     return f;
   }
   
@@ -207,7 +208,7 @@ class Flock {
     float d_y = abs(p.y - wall_y);
     
     float min_d = min(d_x, d_y);
-    float wall_w = (min_d <= boid_p)? 50./sq(min_d) : 0;
+    float wall_w = (min_d <= boid_p)? 1./sq(min_d) : 0;
     
     vector wall_f = v(0, 0);
     wall_f.x = (d_x <= boid_p)? p.x - wall_x : 0;
@@ -220,7 +221,7 @@ class Flock {
   ArrayList<Boid> neighbors(Boid b) {
     ArrayList<Boid> neighbors = new ArrayList<Boid>();
     for (Boid n: flock) {
-      if (d(n.p, b.p) <= boid_p + n.r) {
+      if (n != b && d(n.p, b.p) <= boid_p + n.r) {
         // Is any part of n in b's perception radius?
         neighbors.add(n);
       }
@@ -231,7 +232,11 @@ class Flock {
   // The weight to give a influencing b or vice versa.
   // 1/distance^2
   float weight(Boid a, Boid b) {
-    return 10./sq(d(a.p, b.p)); // boid_p - d(a.p, b.p);
+    return 1./sq(d(a.p, b.p)); // boid_p - d(a.p, b.p);
+  }
+  
+  float weight_vm(Boid a, Boid b) {
+    return boid_p - d(a.p, b.p);
   }
   
   boolean contains(point p) {
