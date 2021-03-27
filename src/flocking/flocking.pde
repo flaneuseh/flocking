@@ -23,7 +23,10 @@
 //   - +/= - Spawn (add one new boid to the simulation) (up to 100)
 //   - (minus sign) - Kill (Remove one boid from the simulation) (down to 0).
 // 
-// Extras:
+// ## Custom Commands:
+// * right mouse held down - do the opposite of the left mouse (repulsion in attraction mode, attraction in repulsion mode)
+// 
+// TODO:
 // 
 // * Implement 3D flocking.
 // * Introduce a predator that chases after your flocking creatures and eats them.
@@ -33,7 +36,7 @@
 // * another species of non predatory boids.
 // * Use a grid or Voronoi/Dalauney triangles to only consider the closest neighborhood of boids.
 // * ### Custom Commands:
-// * right mouse held down - do the opposite of the left mouse (repulsion in attraction mode, attraction in repulsion mode)
+// 
 // * left click (or s?) - spawn a boid at the mouse's position
 // * right click (or k?) - delete the boid at the mouse's position
 // * boid colour variation
@@ -43,6 +46,7 @@
 boolean running = false;
 boolean attraction = true;
 boolean pathing = false;
+int alpha_p = 20; // the alpha value to use when pathing.
 
 // Colours.
 color black = #000000;
@@ -78,23 +82,22 @@ void setup() {
 }
 
 void draw() {
-  if (!pathing) {
-    clear_paths();
-  }
+  paint_background(pathing);
   flock.show();
   if (running) {
     flock.update(dt);
   }
 }
 
-void mousePressed() {}
-
-void mouseClicked() {}
+void paint_background (boolean pathing) {
+  noStroke();
+  if (pathing) fill(aqua, alpha_p);
+  else fill(aqua);
+  rect(0, 0, max_x, max_y);
+}
 
 void clear_paths() {
-  noStroke();
-  fill(aqua);
-  rect(0, 0, max_x, max_y);
+  paint_background(false);
 }
 
 
@@ -102,21 +105,27 @@ void keyPressed() {
   switch (key) {
     case ' ':
       running = !running;
+      println(running? "Play" : "Pause");
       break;
     case 'a':
       attraction = true;
+      println("Toggle left mouse attraction (right mouse repulsion)");
       break;
     case 'r':
       attraction = false;
+      println("Toggle left mouse repulsion (right mouse attraction)");
       break;
     case 's':
       flock.scatter();
+      println("Scatter");
       break;
     case 'p':
       pathing = !pathing;
+      println("Toggle pathing " + (pathing? "on" : "off"));
       break;
     case 'c':
       clear_paths();
+      println("Clear");
       break;
     case '1':
       flock_centering = !flock_centering;
@@ -132,13 +141,17 @@ void keyPressed() {
       break;
     case '4':
       wander = !wander;
-      println("Toggle wander " + (collision_avoidance? "on" : "off"));
+      println("Toggle wander " + (wander? "on" : "off"));
       break;
     case '+':
     case '=':
       flock.spawn(boid_r);
+      println("Spawn");
+      break;
     case '-':
       flock.kill();
+      println("Kill");
+      break;
     default:
       break;
   }

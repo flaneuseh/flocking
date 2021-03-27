@@ -78,8 +78,8 @@ vector s(vector v, float s) {
 // Distance between a and b.
 float d(vector a, vector b) {
   float d = sqrt(sq(a.x - b.x) + sq(a.y - b.y));
-  if (Float.isNaN(d) || Float.isInfinite(d)|| d <= 0 ) {
-    return .001; // Return a small number that will be treated as a minimum distance.
+  if (Float.isNaN(d) || Float.isInfinite(d) || d <= 0 ) {
+    return .0001; // Return a small number that will be treated as a minimum distance.
   }
   return d;
 }

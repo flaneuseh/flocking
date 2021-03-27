@@ -1,15 +1,16 @@
-float boid_r = 20;   // radius of the boids
+float boid_r = 15;   // radius of the boids
 float boid_a = PI/8; // angle of boid triangle.
-float boid_p = 150;  // radius of boid perception
+float boid_p = 200;  // radius of boid perception
 
-float min_v = 5; // Prevent boids from becoming stuck anywhere by setting a low minimum velocity to help them to jiggle out of place.
+float min_v = 7; // Prevent boids from becoming stuck anywhere by setting a low minimum velocity to help them to jiggle out of place.
 float max_v = 10;
 
-float w_fc = .2; // weight for flock centering
-float w_vm = .00001; // weight for velocity matching
-float w_ca = 15; // weight for collision avoidance
+float w_fc = .025; // weight for flock centering
+float w_vm = .001; // weight for velocity matching
+float w_ca = 5; // weight for collision avoidance
 float w_wa = 25; // weight for wall avoidance
-float w_w = .1;  // weight for wander
+float w_w = 1;  // weight for wander
+float w_m = .001; // weight for mouse attraction/repulsion.
 
 class Boid {
   point p;    // point x, y at center
@@ -31,15 +32,15 @@ class Boid {
   
   // Draw boid at current vector facing in the direction of vector.
   void show() {
-    // Bounding circle.
+    // Collision circle.
     //noFill();
     //stroke(light_grey);
     //circle(p.x, p.y, r*2);
     
     // Perception circle.
-    stroke(white);
-    noFill();
-    circle(p.x, p.y, boid_p*2);
+    //stroke(white);
+    //noFill();
+    //circle(p.x, p.y, boid_p*2);
     
     // True location (center of boid)
     //stroke(black);
@@ -84,15 +85,10 @@ class Flock {
     return spawn(random_valid_point(r));
   }
   
-  Boid spawn(Boid b) {
+  Boid spawn(point p) {
+    Boid b = new Boid(p);
     flock.add(b);
     return b;
-  }
-  
-  Boid spawn(point p) {
-    if (this.contains(p)) return null; // Don't spawn a boid over an existing boid.
-    Boid b = new Boid(p);
-    return spawn(b);
   }
   
   // Kill a random boid.
@@ -127,6 +123,7 @@ class Flock {
     for (Boid b : flock){
       b.show();
       
+      // Velocity & forces.
       //vector force_on_b = calculate_forces(b);
       //vector force_from_b = sum(b.p, force_on_b);
       //stroke(black);
@@ -169,19 +166,20 @@ class Flock {
     vector f =v(0, 0);
     
     vector sum_fc = v(0, 0);
-    float sum_w = 0;
+    float sum_wfc = 0;
     vector f_vm = v(0, 0); // velocity matching
     vector f_ca = v(0, 0); // collision avoidance
     
     for (Boid n: neighbors(b)) {
-      float w = weight(n, b);
-      sum_w += w;
-      sum_fc = sum(sum_fc, prod(sum(n.p, i(b.p)), w)); // sum_fc += w(pi - p)
+      float w_fc = weight_fc(n, b);
+      sum_wfc += w_fc;
+      sum_fc = sum(sum_fc, prod(sum(n.p, i(b.p)), w_fc)); // sum_fc += w(pi - p)
       f_vm = sum(f_vm, prod(sum(n.v, i(b.v)), weight_vm(n, b)));     // f_vm += w(vi - v)
-      f_ca = sum(f_ca, prod(sum(b.p, i(n.p)), w));     // f_ca += w(p - pi)
+      f_ca = sum(f_ca, prod(sum(b.p, i(n.p)), weight_ca(n, b)));     // f_ca += w(p - pi)
     }
     
-    vector f_fc = prod(sum_fc, 1 / sum_w); // flock centering
+    sum_wfc = max(sum_wfc, .001); // Ensure against division by 0.
+    vector f_fc = prod(sum_fc, 1 / sum_wfc); // flock centering
     vector f_w = v(random(-1, 1), random(-1, 1)); // wander
     
     if (flock_centering)     f = sum(f, prod(f_fc, w_fc));
@@ -191,6 +189,23 @@ class Flock {
     
     // avoid walls
     f = sum(f, prod(wall_force(b), w_wa));
+    
+    // Mouse attraction/repulsion.
+    point mouse_loc = p(mouseX, mouseY);
+    if (mousePressed && d(mouse_loc, b.p) <= boid_p) {
+      vector force_dir;
+      if ((attraction && mouseButton == LEFT) || (!attraction && mouseButton == RIGHT)) { 
+        // attraction left or repulsion right: attraction
+        force_dir = sum(mouse_loc, i(b.p));
+      }
+      else { // repulsion left or attraction right: repulsion
+        force_dir = sum(b.p, i(mouse_loc));
+      }
+      
+      vector f_m = prod(force_dir, weight_m(b, mouse_loc)); // w(pi - p)
+      f = sum(f, prod(f_m, w_m));
+    }
+    
     return f;
   }
   
@@ -207,8 +222,8 @@ class Flock {
     float d_x = abs(p.x - wall_x);
     float d_y = abs(p.y - wall_y);
     
-    float min_d = min(d_x, d_y);
-    float wall_w = (min_d <= boid_p)? 1./sq(min_d) : 0;
+    float min_d = max(min(d_x, d_y) - b.r, .0001);
+    float wall_w = (min_d <= boid_p)? weight_wa(min_d) : 0;
     
     vector wall_f = v(0, 0);
     wall_f.x = (d_x <= boid_p)? p.x - wall_x : 0;
@@ -229,14 +244,32 @@ class Flock {
     return neighbors;
   }
   
-  // The weight to give a influencing b or vice versa.
-  // 1/distance^2
-  float weight(Boid a, Boid b) {
-    return 1./sq(d(a.p, b.p)); // boid_p - d(a.p, b.p);
+  // Weighting collision avoidance by distance.
+  float weight_ca(Boid a, Boid b) {
+    // Boids' radius is part of the distance, 
+    // and if they are within eachothers' radius they are overlapping.
+    float d = max(d(a.p, b.p) - (a.r + b.r), .0001); 
+    return 1./sq(d);
   }
   
+  // Weighting velocity matching by distance.
   float weight_vm(Boid a, Boid b) {
     return boid_p - d(a.p, b.p);
+  }
+  
+  // Weighting flock centering by distance.
+  float weight_fc(Boid a, Boid b) {
+    return boid_p - d(a.p, b.p);
+  }
+  
+  // Weighting wall avoidance by distance.
+  float weight_wa(float d_from_wall) {
+    return 1./sq(d_from_wall);
+  }
+  
+  // Weighting mouse force by distance.
+  float weight_m(Boid b, point p) {
+    return boid_p - d(p, b.p);
   }
   
   boolean contains(point p) {
