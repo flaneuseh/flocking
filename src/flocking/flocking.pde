@@ -68,6 +68,9 @@ boolean velocity_matching = false;
 boolean collision_avoidance = false;
 boolean wander = false;
 
+boolean show_collision_circles = false;
+boolean show_perception_circles = false;
+
 String current_species = "orange"; // The species currently being added/removed to/from.
 
 void setup() {
@@ -76,6 +79,17 @@ void setup() {
   clear_paths();
   for (int i = 0; i < initial_size; i++) {
     flock.spawn(current_species);
+  }
+  for (int i = 0; i < toggle_dimensions.length; i++) {
+    toggle_dimensions[i][0] = max_cx - 25;
+    toggle_dimensions[i][1] = starting_cy + int(text_spacing*(i+1) - 14);
+    toggle_dimensions[i][2] = font_size;
+  }
+  for (int i = 0; i < button_dimensions.length; i++) {
+    button_dimensions[i][0] = starting_cx;
+    button_dimensions[i][1] = button_start_y + button_spacing*i - 14;
+    button_dimensions[i][2] = max_cx - 25 + font_size - starting_cx;
+    button_dimensions[i][3] = button_size;
   }
   strokeWeight(2);
 }
@@ -129,21 +143,21 @@ int min_cx = max_x;
 int min_cy = 0;
 int max_cx = 1350;
 int max_cy = max_y;
-int font_size = 20;
-int text_spacing = font_size + 10;
-int starting_cx = min_cx + 10;
-int starting_cy = min_cy + 30;
 
-// Ctrl = min x, min y, x size/size, y size (optional)
-int[] ctrl_fc = {starting_cx, starting_cy + int(text_spacing*2.25), font_size};
-int[] ctrl_vm = {starting_cx, starting_cy + int(text_spacing*4.25), font_size};
-int[] ctrl_ca = {starting_cx, starting_cy + int(text_spacing*6.25), font_size};
-int[] ctrl_w = {starting_cx, starting_cy + int(text_spacing*8.25), font_size};
-int[] ctrl_attr = {starting_cx + 70, starting_cy + text_spacing*10 - 15, font_size};
-int[] ctrl_repl = {ctrl_attr[0] + font_size, ctrl_attr[1], ctrl_attr[2]};
-int[] ctrl_p = {starting_cx, starting_cy + int(text_spacing*12.25) - 15, font_size};
-int[] ctrl_clr = {starting_cx - 3, starting_cy + int(text_spacing*13.25) - 12, font_size*6 - 10, font_size + 6};
-int[] ctrl_play = {starting_cx - 3, starting_cy + int(text_spacing*14.25) - 12, font_size*6 - 10, font_size + 6};
+int font_size = 16;
+int text_spacing = font_size + 5;
+int starting_cx = min_cx + 10;
+int starting_cy = min_cy + 20;
+
+String[] toggle_texts = {"flock centering", "velocity matching", "collision avoidance", "wander", "show paths", "show collision circles", "show perception"};
+int[][] toggle_dimensions = new int[toggle_texts.length][4];
+
+int button_size = font_size + 5;
+int button_spacing = button_size + 5;
+int button_start_y = starting_cy + text_spacing * (toggle_texts.length + 1);
+
+String[][] button_texts = {{"clear", "clear"}, {"scatter", "scatter"}, {"set mouse to repulse", "set mouse to attract"}, {"play", "pause"}, {"spawn", "spawn"}, {"kill", "kill"}};
+int[][] button_dimensions = new int[button_texts.length][4];
 
 void show_controls() {
   fill(white);
@@ -154,59 +168,80 @@ void show_controls() {
   textSize(font_size);
   text("CONTROLS", starting_cx, starting_cy);
   
-  // Force controls
-  text("flock centering", starting_cx, starting_cy + text_spacing*2);
-  show_force_controls(ctrl_fc, flock_centering);
-  text("velocity matching", starting_cx, starting_cy + text_spacing*4);
-  show_force_controls(ctrl_vm, velocity_matching);
-  text("collision avoidance", starting_cx, starting_cy + text_spacing*6);
-  show_force_controls(ctrl_ca, collision_avoidance);
-  text("wander", starting_cx, starting_cy + text_spacing*8);
-  show_force_controls(ctrl_w, wander);
+  boolean[] toggles = {flock_centering, velocity_matching, collision_avoidance, wander, pathing, show_collision_circles, show_perception_circles};
+  for (int i = 0; i < toggles.length; i++) {
+    text(toggle_texts[i], starting_cx, starting_cy + text_spacing*(i+1));
+    fill(toggles[i]? black: white);
+    stroke(black);
+    square(toggle_dimensions[i][0], toggle_dimensions[i][1], toggle_dimensions[i][2]);
+    fill(black);
+  }
   
-  int y = starting_cy + text_spacing*10;
-  stroke(black);
-  text("attract", starting_cx, y);
-  fill(attraction? black: white);
-  square(ctrl_attr[0], ctrl_attr[1], ctrl_attr[2]);
-  fill(!attraction? black: white);
-  square(ctrl_repl[0], ctrl_repl[1], ctrl_repl[2]);
-  fill(black);
-  text("repel", starting_cx + 120, y);
-  
-  text("pathing", starting_cx, starting_cy + int(text_spacing*11.5));
-  show_force_controls(ctrl_p, pathing);
-  
-  if (mousePressed && mouse_in(ctrl_clr)) fill(light_grey); else noFill();
-  rect(ctrl_clr[0], ctrl_clr[1], ctrl_clr[2], ctrl_clr[3]);
-  fill(black);
-  text("clear paths", starting_cx, starting_cy + int(text_spacing*13.5));
-  
-  if (mousePressed && mouse_in(ctrl_play)) fill(light_grey); else noFill();
-  rect(ctrl_play[0], ctrl_play[1], ctrl_play[2], ctrl_play[3]);
-  fill(black);
-  text(running? "pause" : "play", starting_cx, starting_cy + int(text_spacing*14.5));
-}
-
-void show_force_controls(int[] dimensions, boolean on) {
-  fill(on? black: white);
-  stroke(black);
-  square(dimensions[0], dimensions[1], dimensions[2]);
-  fill(black);
+  boolean[] buttons = {true, true, attraction, !running, true, true};
+  for (int i = 0; i < buttons.length; i++) {
+    int text_index = buttons[i]? 0: 1;
+    if (mousePressed && mouse_in(button_dimensions[i])) fill(light_grey); else noFill();
+    rect(button_dimensions[i][0], button_dimensions[i][1], button_dimensions[i][2], button_dimensions[i][3]);
+    fill(black);
+    text(button_texts[i][text_index], starting_cx + 5, button_start_y + int(button_spacing*i) + 3);  
+  }
 }
 
 void mousePressed() {
-  int[][] ctrl_dimensions = {ctrl_fc, ctrl_vm, ctrl_ca, ctrl_w, ctrl_attr, ctrl_repl, ctrl_p, ctrl_clr, ctrl_play};
-  for (int[] dimensions : ctrl_dimensions) {
-    if (mouse_in(dimensions)) {
-      if (dimensions == ctrl_fc) flock_centering = !flock_centering;
-      else if (dimensions == ctrl_vm) velocity_matching = !velocity_matching;
-      else if (dimensions == ctrl_ca) collision_avoidance = !collision_avoidance;
-      else if (dimensions == ctrl_w) wander = !wander;
-      else if (dimensions == ctrl_attr || dimensions == ctrl_repl) attraction = !attraction;
-      else if (dimensions == ctrl_p) pathing = !pathing;
-      else if (dimensions == ctrl_clr) clear_paths();
-      else if (dimensions == ctrl_play) running = !running;
+  for (int i = 0; i < toggle_dimensions.length; i++) {
+    if (mouse_in(toggle_dimensions[i])) {
+      switch (toggle_texts[i]) {     
+        case "flock centering":
+          flock_centering = !flock_centering;
+          break;
+        case "velocity matching":
+          velocity_matching = !velocity_matching;
+          break;
+        case "collision avoidance":
+          collision_avoidance = !collision_avoidance;
+          break;
+        case "wander":
+          wander = !wander;
+          break;
+        case "show paths":
+          pathing = !pathing;
+          break;
+        case "show collision circles":
+          show_collision_circles = !show_collision_circles;
+          break;
+        case "show perception":
+          show_perception_circles = !show_perception_circles;
+          break;
+        default:
+          break;
+      }
+    }
+  }
+
+  for (int i = 0; i < button_dimensions.length; i++) {
+    if (mouse_in(button_dimensions[i])) {
+      switch (button_texts[i][0]) {   
+        case "clear":
+          clear_paths();
+          break;
+        case "scatter":
+          flock.scatter();
+          break;
+        case "set mouse to repulse":
+          attraction = !attraction;
+          break;
+        case "play":
+          running = !running;
+          break;
+        case "spawn":
+          flock.spawn(current_species);
+          break;
+        case "kill":
+          flock.kill(current_species);
+          break;
+        default:
+          break;
+      }
     }
   }
 }
@@ -216,7 +251,7 @@ boolean mouse_in(int[] dimensions) {
   int min_x = dimensions[0];
   int max_x = min_x + dimensions[2];
   int min_y = dimensions[1];
-  int max_y = dimensions[1] + (dimensions.length > 3? dimensions[3] : dimensions[2]);
+  int max_y = dimensions[1] + (dimensions[3] > 0? dimensions[3] : dimensions[2]);
   return (mouseX >= min_x && mouseX <= max_x && mouseY >= min_y && mouseY <= max_y);
 }
 

@@ -5,9 +5,9 @@ float boid_p = 200;  // radius of boid perception
 float min_v = 7; // Prevent boids from becoming stuck anywhere by setting a low minimum velocity to help them to jiggle out of place.
 float max_v = 10;
 
-float w_fc = .025; // weight for flock centering
-float w_vm = .001; // weight for velocity matching
-float w_ca = 5; // weight for collision avoidance
+float w_fc = .007; // weight for flock centering
+float w_vm = .0001; // weight for velocity matching
+float w_ca = 3; // weight for collision avoidance
 float w_wa = 25; // weight for wall avoidance
 float w_w = 10;  // weight for wander
 float w_m = .001; // weight for mouse attraction/repulsion.
@@ -29,14 +29,17 @@ class Boid {
   // Draw boid at current vector facing in the direction of vector.
   void show() {
     // Collision circle.
-    //noFill();
-    //stroke(red);
-    //circle(p.x, p.y, r*2);
+    if (show_collision_circles) {
+      noFill();
+      stroke(red);
+      circle(p.x, p.y, r*2);
+    }
     
-    // Perception circle.
-    //stroke(white);
-    //noFill();
-    //circle(p.x, p.y, boid_p*2);
+    if (show_perception_circles) {
+      stroke(white);
+      noFill();
+      circle(p.x, p.y, boid_p*2);
+    }
     
     // True location (center of boid)
     //stroke(black);
