@@ -51,8 +51,6 @@ int alpha_p = 20; // the alpha value to use when pathing.
 // Colours.
 color black = #000000;
 color white = #ffffff;
-color orange = #ff6600;
-color dark_orange = #993d00;
 color light_grey = #cccccc;
 color aqua = #00ffff;
 color red = #ff0000;
@@ -70,13 +68,16 @@ boolean velocity_matching = false;
 boolean collision_avoidance = false;
 boolean wander = false;
 
+String current_species = "orange"; // The species currently being added/removed to/from.
+
 void setup() {
   size(1350, 850);
   surface.setTitle("BOIDS!");
   clear_paths();
   for (int i = 0; i < initial_size; i++) {
-    flock.spawn(boid_r);
+    flock.spawn(current_species);
   }
+  strokeWeight(2);
 }
 
 void draw() {
@@ -133,13 +134,16 @@ int text_spacing = font_size + 10;
 int starting_cx = min_cx + 10;
 int starting_cy = min_cy + 30;
 
-// Ctrl = min x, min y, size
+// Ctrl = min x, min y, x size/size, y size (optional)
 int[] ctrl_fc = {starting_cx, starting_cy + int(text_spacing*2.25), font_size};
 int[] ctrl_vm = {starting_cx, starting_cy + int(text_spacing*4.25), font_size};
 int[] ctrl_ca = {starting_cx, starting_cy + int(text_spacing*6.25), font_size};
 int[] ctrl_w = {starting_cx, starting_cy + int(text_spacing*8.25), font_size};
 int[] ctrl_attr = {starting_cx + 70, starting_cy + text_spacing*10 - 15, font_size};
 int[] ctrl_repl = {ctrl_attr[0] + font_size, ctrl_attr[1], ctrl_attr[2]};
+int[] ctrl_p = {starting_cx, starting_cy + int(text_spacing*12.25) - 15, font_size};
+int[] ctrl_clr = {starting_cx - 3, starting_cy + int(text_spacing*13.25) - 12, font_size*6 - 10, font_size + 6};
+int[] ctrl_play = {starting_cx - 3, starting_cy + int(text_spacing*14.25) - 12, font_size*6 - 10, font_size + 6};
 
 void show_controls() {
   fill(white);
@@ -152,13 +156,13 @@ void show_controls() {
   
   // Force controls
   text("flock centering", starting_cx, starting_cy + text_spacing*2);
-  show_force_controls(ctrl_fc[0], ctrl_fc[1], flock_centering);
+  show_force_controls(ctrl_fc, flock_centering);
   text("velocity matching", starting_cx, starting_cy + text_spacing*4);
-  show_force_controls(ctrl_vm[0], ctrl_vm[1], velocity_matching);
+  show_force_controls(ctrl_vm, velocity_matching);
   text("collision avoidance", starting_cx, starting_cy + text_spacing*6);
-  show_force_controls(ctrl_ca[0], ctrl_ca[1], collision_avoidance);
+  show_force_controls(ctrl_ca, collision_avoidance);
   text("wander", starting_cx, starting_cy + text_spacing*8);
-  show_force_controls(ctrl_w[0], ctrl_w[1], wander);
+  show_force_controls(ctrl_w, wander);
   
   int y = starting_cy + text_spacing*10;
   stroke(black);
@@ -169,36 +173,56 @@ void show_controls() {
   square(ctrl_repl[0], ctrl_repl[1], ctrl_repl[2]);
   fill(black);
   text("repel", starting_cx + 120, y);
+  
+  text("pathing", starting_cx, starting_cy + int(text_spacing*11.5));
+  show_force_controls(ctrl_p, pathing);
+  
+  if (mousePressed && mouse_in(ctrl_clr)) fill(light_grey); else noFill();
+  rect(ctrl_clr[0], ctrl_clr[1], ctrl_clr[2], ctrl_clr[3]);
+  fill(black);
+  text("clear paths", starting_cx, starting_cy + int(text_spacing*13.5));
+  
+  if (mousePressed && mouse_in(ctrl_play)) fill(light_grey); else noFill();
+  rect(ctrl_play[0], ctrl_play[1], ctrl_play[2], ctrl_play[3]);
+  fill(black);
+  text(running? "pause" : "play", starting_cx, starting_cy + int(text_spacing*14.5));
 }
 
-void show_force_controls(int x, int y, boolean on) {
+void show_force_controls(int[] dimensions, boolean on) {
   fill(on? black: white);
   stroke(black);
-  square(x, y, font_size);
+  square(dimensions[0], dimensions[1], dimensions[2]);
   fill(black);
 }
 
 void mousePressed() {
-  int[][] ctrls = {ctrl_fc, ctrl_vm, ctrl_ca, ctrl_w, ctrl_attr, ctrl_repl};
-  for (int[] ctrl : ctrls) {
-    int min_x = ctrl[0];
-    int max_x = min_x + ctrl[2];
-    int min_y = ctrl[1];
-    int max_y = ctrl[1] + ctrl[2];
-    if (mouseX >= min_x && mouseX <= max_x && mouseY >= min_y && mouseY <= max_y) {
-      if (ctrl == ctrl_fc) flock_centering = !flock_centering;
-      else if (ctrl == ctrl_vm) velocity_matching = !velocity_matching;
-      else if (ctrl == ctrl_ca) collision_avoidance = !collision_avoidance;
-      else if (ctrl == ctrl_w) wander = !wander;
-      else if (ctrl == ctrl_attr || ctrl == ctrl_repl) attraction = !attraction;
+  int[][] ctrl_dimensions = {ctrl_fc, ctrl_vm, ctrl_ca, ctrl_w, ctrl_attr, ctrl_repl, ctrl_p, ctrl_clr, ctrl_play};
+  for (int[] dimensions : ctrl_dimensions) {
+    if (mouse_in(dimensions)) {
+      if (dimensions == ctrl_fc) flock_centering = !flock_centering;
+      else if (dimensions == ctrl_vm) velocity_matching = !velocity_matching;
+      else if (dimensions == ctrl_ca) collision_avoidance = !collision_avoidance;
+      else if (dimensions == ctrl_w) wander = !wander;
+      else if (dimensions == ctrl_attr || dimensions == ctrl_repl) attraction = !attraction;
+      else if (dimensions == ctrl_p) pathing = !pathing;
+      else if (dimensions == ctrl_clr) clear_paths();
+      else if (dimensions == ctrl_play) running = !running;
     }
   }
+}
+
+// Ctrl = min x, min y, x size/size, y size (optional)
+boolean mouse_in(int[] dimensions) {
+  int min_x = dimensions[0];
+  int max_x = min_x + dimensions[2];
+  int min_y = dimensions[1];
+  int max_y = dimensions[1] + (dimensions.length > 3? dimensions[3] : dimensions[2]);
+  return (mouseX >= min_x && mouseX <= max_x && mouseY >= min_y && mouseY <= max_y);
 }
 
 void clear_paths() {
   paint_background(false);
 }
-
 
 void keyPressed() {
   switch (key) {
@@ -244,11 +268,11 @@ void keyPressed() {
       break;
     case '+':
     case '=':
-      flock.spawn(boid_r);
+      flock.spawn(current_species);
       println("Spawn");
       break;
     case '-':
-      flock.kill();
+      flock.kill(current_species);
       println("Kill");
       break;
     default:

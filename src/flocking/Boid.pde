@@ -18,23 +18,19 @@ class Boid {
   color fill = orange;    
   color outline = dark_orange;
   float r = boid_r;  // radius of bounding circle
-  float o;  // angle of triangle
+  float o = boid_a;  // angle of triangle
   
   Boid() {
-    p = p(0, 0);
-  }
-  
-  Boid(point p) {
-    this.p = p;
-    this.v = v(); // Initialize to random velocity.
-    this.o = boid_a;
+    r = boid_r + random(-3, 3);
+    p = random_valid_point(r);
+    v = v();
   }
   
   // Draw boid at current vector facing in the direction of vector.
   void show() {
     // Collision circle.
     //noFill();
-    //stroke(light_grey);
+    //stroke(red);
     //circle(p.x, p.y, r*2);
     
     // Perception circle.
@@ -68,59 +64,101 @@ class Boid {
   }
 }
 
+// Default boids.
+color orange = #ff6600;
+color dark_orange = #993d00;
+
+class Orange extends Boid {
+  color fill = orange;    
+  color outline = dark_orange;
+  float r = boid_r;  
+}
+
+// Friendly boids.
+color blue = #0000ff;
+color dark_blue = #000080;
+
+class Blue extends Boid {
+  color fill = blue;    
+  color outline = dark_blue;
+  float r = boid_r;  
+}
+
+// Predator boids.
+color pgrey = #666699;
+color dark_pgrey = #3d3d5c;
+
+class Grey extends Boid {
+  color fill = pgrey;    
+  color outline = dark_pgrey;
+  float r = boid_r*2;  
+}
+
 float dt = .5;
+
+String[] species = {"Orange", "Blue", "Grey"};
+boolean orange_active = true;
+boolean blue_active = true;
+boolean grey_active = true;
 class Flock {
-  ArrayList<Boid> flock;
+  ArrayList<Orange> orange_flock;
+  ArrayList<Blue> blue_flock;
+  ArrayList<Grey> grey_flock;
   
   Flock() {
-    flock = new ArrayList<Boid>();
+    orange_flock = new ArrayList<Orange>();
+    blue_flock = new ArrayList<Blue>();
+    grey_flock = new ArrayList<Grey>();
   }
   
-  Flock(ArrayList<Boid> boids){
-    flock = boids;
+  ArrayList<Boid> all() {
+    ArrayList<Boid> all = new ArrayList<Boid>();
+    if (orange_active) all.addAll(orange_flock);
+    if (blue_active) all.addAll(blue_flock);
+    if (grey_active) all.addAll(grey_flock);
+    return all;
   }
   
   // Spawn a random boid.
-  Boid spawn(float r) {
-    return spawn(random_valid_point(r));
-  }
-  
-  Boid spawn(point p) {
-    Boid b = new Boid(p);
-    flock.add(b);
-    return b;
+  Boid spawn(String species) {
+    switch (species) {
+      case "Blue":
+        Blue b = new Blue();
+        blue_flock.add(b);
+        return b;
+      case "Grey":
+        Grey g = new Grey();
+        grey_flock.add(g);
+        return g;
+      case "Orange":
+      default:
+        Orange o = new Orange();
+        orange_flock.add(o);
+        return o;
+    }
   }
   
   // Kill a random boid.
-  Boid kill() {
-    return flock.remove(floor(random(flock.size())));
-  }
-  
-  Boid kill(int i) {
-    return flock.remove(i);
-  }
-  
-  boolean kill(Boid b) {
-    return flock.remove(b);
-  }
-  
-  boolean kill(int x, int y) {
-    for (Boid b: flock) {
-      if (b.contains(p(x, y))) {
-        return flock.remove(b);
-      }
+  Boid kill(String species) {
+    switch (species) {
+      case "Blue":
+        return blue_flock.remove(floor(random(blue_flock.size())));
+      case "Grey":
+        return grey_flock.remove(floor(random(grey_flock.size())));
+      case "Orange":
+      default:
+        return orange_flock.remove(floor(random(orange_flock.size())));
     }
-    return false;
   }
   
   void scatter() {
-    for (Boid b : flock) {
+    for (Boid b : all()) {
       b.p = random_valid_point(b.r);
     }
   }
   
   void show() {
-    for (Boid b : flock){
+    for (Boid b : all()){
       b.show();
       
       // Velocity & forces.
@@ -134,7 +172,7 @@ class Flock {
   }
   
   void update(float dt) {
-    for (Boid b : flock){
+    for (Boid b : all()){
       update(b, dt);
     }
   }
@@ -234,7 +272,7 @@ class Flock {
   // Get neighbors in b's perception.
   ArrayList<Boid> neighbors(Boid b) {
     ArrayList<Boid> neighbors = new ArrayList<Boid>();
-    for (Boid n: flock) {
+    for (Boid n: all()) {
       if (n != b && d(n.p, b.p) <= boid_p + n.r) {
         // Is any part of n in b's perception radius?
         neighbors.add(n);
@@ -270,19 +308,13 @@ class Flock {
   float weight_m(Boid b, point p) {
     return boid_p - d(p, b.p);
   }
-  
-  boolean contains(point p) {
-    for (Boid b : flock) {
-      if (b.contains(p)) return true;
-    }
-    return false;
-  }
-  
-  // Random point within the boundaries and respecting the r of the boid.
-  point random_valid_point(float r) {
-    return p(
-      floor(random(0 + r, max_x - r)),
-      floor(random(0 + r, max_y - r))
-    );
-  }
 }
+
+// Random point within the boundaries and respecting an object radius.
+point random_valid_point(float r) {
+  return p(
+    floor(random(0 + r, max_x - r)),
+    floor(random(0 + r, max_y - r))
+  );
+}
+  
