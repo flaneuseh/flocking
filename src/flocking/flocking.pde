@@ -56,6 +56,21 @@ color aqua = #00ffff;
 color red = #ff0000;
 color green = #00802b;
 
+// Default boids.
+color light_orange = #ffa366;
+color orange = #ff6600;
+color dark_orange = #993d00;
+
+// Friendly boids.
+color light_blue = #b3b3ff;
+color blue = #0000ff;
+color dark_blue = #000099;
+
+// Predator boids.
+color light_pgrey = #a3a3c2;
+color pgrey = #666699;
+color dark_pgrey = #3d3d5c;
+
 // Flock
 Flock flock = new Flock();
 int initial_size = 16;
@@ -71,7 +86,7 @@ boolean wander = false;
 boolean show_collision_circles = false;
 boolean show_perception_circles = false;
 
-String current_species = "orange"; // The species currently being added/removed to/from.
+String current_species = "Orange"; // The species currently being added/removed to/from.
 
 void setup() {
   size(1350, 850);
@@ -82,7 +97,7 @@ void setup() {
   }
   for (int i = 0; i < toggle_dimensions.length; i++) {
     toggle_dimensions[i][0] = max_cx - 25;
-    toggle_dimensions[i][1] = starting_cy + int(text_spacing*(i+1) - 14);
+    toggle_dimensions[i][1] = starting_cy + text_spacing*(i+1) - 14;
     toggle_dimensions[i][2] = font_size;
   }
   for (int i = 0; i < button_dimensions.length; i++) {
@@ -90,6 +105,13 @@ void setup() {
     button_dimensions[i][1] = button_start_y + button_spacing*i - 14;
     button_dimensions[i][2] = max_cx - 25 + font_size - starting_cx;
     button_dimensions[i][3] = button_size;
+  }
+  for (int i = 0; i < species_texts.length; i++) {
+    for (int j = 0; j < species_toggle_dimensions[i].length; j++) {
+      species_toggle_dimensions[i][j][0] = max_cx - 59 + (font_size + 2) * j;
+      species_toggle_dimensions[i][j][1] = species_start_y + text_spacing*i - 14;
+      species_toggle_dimensions[i][j][2] = font_size;
+    }
   }
   strokeWeight(2);
 }
@@ -159,6 +181,12 @@ int button_start_y = starting_cy + text_spacing * (toggle_texts.length + 1);
 String[][] button_texts = {{"clear", "clear"}, {"scatter", "scatter"}, {"set mouse to repulse", "set mouse to attract"}, {"play", "pause"}, {"spawn", "spawn"}, {"kill", "kill"}};
 int[][] button_dimensions = new int[button_texts.length][4];
 
+int species_start_y = button_start_y + button_spacing * (button_texts.length);
+String[] species_texts = {"active species", "+/- species"};
+color[] species_on_colours = {orange, blue, pgrey};
+color[] species_off_colours = {light_orange, light_blue, light_pgrey};
+int[][][] species_toggle_dimensions = new int[species_texts.length][3][4];
+
 void show_controls() {
   fill(white);
   stroke(black);
@@ -185,6 +213,35 @@ void show_controls() {
     fill(black);
     text(button_texts[i][text_index], starting_cx + 5, button_start_y + int(button_spacing*i) + 3);  
   }
+  
+  boolean[] active_species = {orange_active, blue_active, grey_active};
+  boolean[] species_pop = new boolean[3];
+  switch (current_species) {
+    case "Orange":
+      species_pop[0] = true;
+      break;
+    case "Blue":
+      species_pop[1] = true;
+      break;
+    case "Grey":
+      species_pop[2] = true;
+      break;
+    default:
+      break;
+  }
+  boolean[][] species_bools = {active_species, species_pop};
+  
+  noStroke();
+  for (int i = 0; i < species_texts.length; i++) {
+    fill(black);
+    text(species_texts[i], starting_cx, species_start_y + text_spacing*i);
+    for (int j = 0; j < species_toggle_dimensions[i].length; j++) {
+      color fill_colour = species_bools[i][j]? species_on_colours[j] : species_off_colours[j];
+      fill(fill_colour);
+      square(species_toggle_dimensions[i][j][0], species_toggle_dimensions[i][j][1], species_toggle_dimensions[i][j][2]);
+    }
+  }
+  stroke(black);
 }
 
 void mousePressed() {
@@ -241,6 +298,41 @@ void mousePressed() {
           break;
         default:
           break;
+      }
+    }
+  }
+  
+  for (int i = 0; i < species_toggle_dimensions.length; i++) {
+    for (int j = 0; j < species_toggle_dimensions[i].length; j++) {
+      if (mouse_in(species_toggle_dimensions[i][j])) {
+        if (i == 0) {
+          switch(j) {
+            case 0: 
+              orange_active = !orange_active;
+              break;
+            case 1: 
+              blue_active = !blue_active;
+              break;
+            case 2: 
+              grey_active = !grey_active;
+              break;
+            default:
+              break;
+          }
+        }
+        else {
+          switch(j) {
+            case 0: 
+              current_species = "Orange";
+              break;
+            case 1: 
+              current_species = "Blue";
+              break;
+            case 2: 
+              current_species = "Grey";
+              break;
+          }
+        }
       }
     }
   }

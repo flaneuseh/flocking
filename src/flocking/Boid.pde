@@ -15,9 +15,9 @@ float w_m = .001; // weight for mouse attraction/repulsion.
 class Boid {
   point p;    // point x, y at center
   vector v;     // velocity x, y
-  color fill = orange;    
-  color outline = dark_orange;
-  float r = boid_r;  // radius of bounding circle
+  color fill;    
+  color outline;
+  float r;  // radius of bounding circle
   float o = boid_a;  // angle of triangle
   
   Boid() {
@@ -67,42 +67,37 @@ class Boid {
   }
 }
 
-// Default boids.
-color orange = #ff6600;
-color dark_orange = #993d00;
-
-class Orange extends Boid {
-  color fill = orange;    
-  color outline = dark_orange;
-  float r = boid_r;  
+class Orange extends Boid { 
+  Orange() {
+    super();
+    this.fill = orange;
+    this.outline = dark_orange;
+  }
 }
-
-// Friendly boids.
-color blue = #0000ff;
-color dark_blue = #000080;
 
 class Blue extends Boid {
-  color fill = blue;    
-  color outline = dark_blue;
-  float r = boid_r;  
+  Blue() {
+    super();
+    this.fill = blue;    
+    this.outline = dark_blue;
+  }
 }
 
-// Predator boids.
-color pgrey = #666699;
-color dark_pgrey = #3d3d5c;
-
 class Grey extends Boid {
-  color fill = pgrey;    
-  color outline = dark_pgrey;
-  float r = boid_r*2;  
+  Grey() {
+    super();
+    this.fill = pgrey;    
+    this.outline = dark_pgrey;
+    this.r = boid_r*2 + random(-5, 5);  
+  }
 }
 
 float dt = .5;
 
 String[] species = {"Orange", "Blue", "Grey"};
 boolean orange_active = true;
-boolean blue_active = true;
-boolean grey_active = true;
+boolean blue_active = false;
+boolean grey_active = false;
 class Flock {
   ArrayList<Orange> orange_flock;
   ArrayList<Blue> blue_flock;
@@ -124,6 +119,7 @@ class Flock {
   
   // Spawn a random boid.
   Boid spawn(String species) {
+    if (orange_flock.size() + blue_flock.size() + grey_flock.size() >= 100) return null;
     switch (species) {
       case "Blue":
         Blue b = new Blue();
@@ -145,11 +141,14 @@ class Flock {
   Boid kill(String species) {
     switch (species) {
       case "Blue":
+        if (blue_flock.size() <= 0) return null;
         return blue_flock.remove(floor(random(blue_flock.size())));
       case "Grey":
+        if (blue_flock.size() <= 0) return null;
         return grey_flock.remove(floor(random(grey_flock.size())));
       case "Orange":
       default:
+        if (blue_flock.size() <= 0) return null;
         return orange_flock.remove(floor(random(orange_flock.size())));
     }
   }
