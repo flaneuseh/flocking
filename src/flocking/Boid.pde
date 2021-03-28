@@ -5,7 +5,7 @@ float boid_p = 200;  // radius of boid perception
 float min_v = 7; // Prevent boids from becoming stuck anywhere by setting a low minimum velocity to help them to jiggle out of place.
 float max_v = 10;
 
-float w_fc = .007; // weight for flock centering
+float w_fc = .01; // weight for flock centering
 float w_vm = .0001; // weight for velocity matching
 float w_ca = 3; // weight for collision avoidance
 float w_wa = 25; // weight for wall avoidance
