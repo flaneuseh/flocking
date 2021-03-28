@@ -90,7 +90,7 @@ void draw() {
 }
 
 void show_mouse() {
-  if (mousePressed) {
+  if (mouse_active()) {
     color c;
     if (attracting()) { 
       // attraction left or repulsion right: attraction
@@ -105,6 +105,10 @@ void show_mouse() {
     noStroke();
     circle(mouseX, mouseY, boid_p*2);
   }
+}
+
+boolean mouse_active() {
+  return mousePressed && mouseX <= max_x && mouseY <= max_y;
 }
 
 boolean attracting() {
@@ -124,14 +128,71 @@ int min_cx = max_x;
 int min_cy = 0;
 int max_cx = 1350;
 int max_cy = max_y;
+int font_size = 20;
+int text_spacing = font_size + 10;
+int starting_cx = min_cx + 10;
+int starting_cy = min_cy + 30;
+
+// Ctrl = min x, min y, size
+int[] ctrl_fc = {starting_cx, starting_cy + int(text_spacing*2.25), font_size};
+int[] ctrl_vm = {starting_cx, starting_cy + int(text_spacing*4.25), font_size};
+int[] ctrl_ca = {starting_cx, starting_cy + int(text_spacing*6.25), font_size};
+int[] ctrl_w = {starting_cx, starting_cy + int(text_spacing*8.25), font_size};
+int[] ctrl_attr = {starting_cx + 70, starting_cy + text_spacing*10 - 15, font_size};
+int[] ctrl_repl = {ctrl_attr[0] + font_size, ctrl_attr[1], ctrl_attr[2]};
+
 void show_controls() {
   fill(white);
   stroke(black);
   rect(min_cx, min_cy, max_cx - min_cx, max_cy);
   
   fill(black);
-  textSize(16);
-  text("CONTROLS", min_cx + 10, min_cy + 30);
+  textSize(font_size);
+  text("CONTROLS", starting_cx, starting_cy);
+  
+  // Force controls
+  text("flock centering", starting_cx, starting_cy + text_spacing*2);
+  show_force_controls(ctrl_fc[0], ctrl_fc[1], flock_centering);
+  text("velocity matching", starting_cx, starting_cy + text_spacing*4);
+  show_force_controls(ctrl_vm[0], ctrl_vm[1], velocity_matching);
+  text("collision avoidance", starting_cx, starting_cy + text_spacing*6);
+  show_force_controls(ctrl_ca[0], ctrl_ca[1], collision_avoidance);
+  text("wander", starting_cx, starting_cy + text_spacing*8);
+  show_force_controls(ctrl_w[0], ctrl_w[1], wander);
+  
+  int y = starting_cy + text_spacing*10;
+  stroke(black);
+  text("attract", starting_cx, y);
+  fill(attraction? black: white);
+  square(ctrl_attr[0], ctrl_attr[1], ctrl_attr[2]);
+  fill(!attraction? black: white);
+  square(ctrl_repl[0], ctrl_repl[1], ctrl_repl[2]);
+  fill(black);
+  text("repel", starting_cx + 120, y);
+}
+
+void show_force_controls(int x, int y, boolean on) {
+  fill(on? black: white);
+  stroke(black);
+  square(x, y, font_size);
+  fill(black);
+}
+
+void mousePressed() {
+  int[][] ctrls = {ctrl_fc, ctrl_vm, ctrl_ca, ctrl_w, ctrl_attr, ctrl_repl};
+  for (int[] ctrl : ctrls) {
+    int min_x = ctrl[0];
+    int max_x = min_x + ctrl[2];
+    int min_y = ctrl[1];
+    int max_y = ctrl[1] + ctrl[2];
+    if (mouseX >= min_x && mouseX <= max_x && mouseY >= min_y && mouseY <= max_y) {
+      if (ctrl == ctrl_fc) flock_centering = !flock_centering;
+      else if (ctrl == ctrl_vm) velocity_matching = !velocity_matching;
+      else if (ctrl == ctrl_ca) collision_avoidance = !collision_avoidance;
+      else if (ctrl == ctrl_w) wander = !wander;
+      else if (ctrl == ctrl_attr || ctrl == ctrl_repl) attraction = !attraction;
+    }
+  }
 }
 
 void clear_paths() {

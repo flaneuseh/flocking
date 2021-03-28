@@ -192,7 +192,7 @@ class Flock {
     
     // Mouse attraction/repulsion.
     point mouse_loc = p(mouseX, mouseY);
-    if (mousePressed && d(mouse_loc, b.p) <= boid_p) {
+    if (mouse_active() && d(mouse_loc, b.p) <= boid_p) {
       vector force_dir;
       if (attracting()) { 
         force_dir = sum(mouse_loc, i(b.p));
