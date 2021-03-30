@@ -1,18 +1,18 @@
 float boid_r = 7;   // radius of the boids
 float boid_a = PI/8; // angle of boid triangle.
-float boid_p = 200;  // radius of boid perception
+float boid_p = boid_r * 30;  // radius of boid perception
 
 float min_v = 7; // Prevent boids from becoming stuck anywhere by setting a low minimum velocity to help them to jiggle out of place.
 float max_v = 10;
 
-float w_fc = .01; // weight for flock centering
+float w_fc = .7; // weight for flock centering
 float w_vm = .00005; // weight for velocity matching
-float w_ca = 3; // weight for collision avoidance
-float w_wa = 25; // weight for wall avoidance
-float w_w = 15;  // weight for wander
+float w_ca = 1; // weight for collision avoidance
+float w_wa = 35; // weight for wall avoidance
+float w_w = 10;  // weight for wander
 float w_m = .001; // weight for mouse attraction/repulsion.
-float w_flee = .01; // weight for chase
-float w_chase = .01; // weight for flee
+float w_flee = .0005; // weight for chase
+float w_chase = .0005; // weight for flee
 
 class Boid {
   point p;    // point x, y at center
@@ -23,7 +23,7 @@ class Boid {
   float o = boid_a;  // angle of triangle
   
   Boid() {
-    r = boid_r + random(-3, 3);
+    r = boid_r + random(-2, 2);
     p = random_valid_point(r);
     v = v();
   }
@@ -90,7 +90,7 @@ class Grey extends Boid {
     super();
     this.fill = pgrey;    
     this.outline = dark_pgrey;
-    this.r = boid_r*2 + random(-5, 5);  
+    this.r = boid_r*2 + random(-3, 3);  
   }
 }
 
@@ -210,24 +210,32 @@ class Flock {
     float sum_wfc = 0;
     vector f_vm = v(0, 0); // velocity matching
     vector f_ca = v(0, 0); // collision avoidance
-    vector f_flee = v(0, 0); // flee predator (Grey)
-    vector f_chase = v(0, 0); // chase prey (Blue, Orange)
+    
+    vector sum_flee = v(0, 0);
+    vector sum_chase = v(0, 0);
+    float sum_wflee = 0;
+    float sum_wchase = 0;
     
     for (Boid n: neighbors(b)) {
+      f_ca = sum(f_ca, prod(sum(b.p, i(n.p)), weight_ca(n, b)));     // f_ca += w(p - pi)
       boolean same_species = (b.getClass() == n.getClass());
-      
       if (same_species) {
         // Only flock with members of the same species.
-        float w_fc = weight_fc(n, b);
-        sum_wfc += w_fc;
+        sum_wfc += weight_fc(n, b);
         sum_fc = sum(sum_fc, prod(sum(n.p, i(b.p)), w_fc));            // sum_fc += w(pi - p)
         f_vm = sum(f_vm, prod(sum(n.v, i(b.v)), weight_vm(n, b)));     // f_vm += w(vi - v)
       }
-      else if (n instanceof Grey || b instanceof Grey) {
-        // Predation
-        
+      else if (n instanceof Grey) {
+        // Flee predator.
+        sum_wflee += weight_flee(n, b);
+        sum_flee = sum(sum_flee, prod(sum(b.p, i(n.p)), weight_flee(n, b)));
       }
-      f_ca = sum(f_ca, prod(sum(b.p, i(n.p)), weight_ca(n, b)));     // f_ca += w(p - pi)
+      else if (b instanceof Grey) {
+        // Chase prey.
+        sum_wchase += weight_chase(n, b);
+        sum_chase = sum(sum_chase, prod(sum(n.p, i(b.p)), weight_chase(n, b)));
+      }
+      
     }
     
     sum_wfc = max(sum_wfc, .001); // Ensure against division by 0.
@@ -256,6 +264,16 @@ class Flock {
       vector f_m = prod(force_dir, weight_m(b, mouse_loc)); // w(pi - p)
       f = sum(f, prod(f_m, w_m));
     }
+    
+    // Flee predators.
+    //sum_wflee = max(sum_wflee, .001); // Ensure against division by 0.
+    //vector f_flee = prod(sum_flee, 1 / sum_wflee); // flee predator (Grey)
+    f = sum(f, prod(sum_flee, w_flee));
+    
+    // Chase prey.
+    //sum_wchase = max(sum_wchase, .001); // Ensure against division by 0.
+    //vector f_chase = prod(sum_chase, 1 / sum_wchase); // chase prey (Blue, Orange)
+    f = sum(f, prod(sum_chase, w_chase));
     
     return f;
   }
@@ -299,7 +317,7 @@ class Flock {
   float weight_ca(Boid a, Boid b) {
     // Boids' radius is part of the distance, 
     // and if they are within eachothers' radius they are overlapping.
-    float d = max(d(a.p, b.p) - (a.r + b.r), .0001); 
+    float d = max(d(a.p, b.p) - (a.r + b.r)/2, .0001); 
     if (d < boid_p/2.) return 1./sq(d); // Collision perception is 1/2 other perception.
     else return .0001;
   }
@@ -322,6 +340,16 @@ class Flock {
   // Weighting mouse force by distance.
   float weight_m(Boid b, point p) {
     return boid_p - d(p, b.p);
+  }
+  
+  // Weight chase.
+  float weight_chase(Boid a, Boid b) {
+    return boid_p - d(a.p, b.p);
+  }
+  
+  // Weight flee.
+  float weight_flee(Boid a, Boid b) {
+    return boid_p - d(a.p, b.p);
   }
 }
 
