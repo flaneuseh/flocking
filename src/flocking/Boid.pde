@@ -1,4 +1,4 @@
-float boid_r = 15;   // radius of the boids
+float boid_r = 7;   // radius of the boids
 float boid_a = PI/8; // angle of boid triangle.
 float boid_p = 200;  // radius of boid perception
 
@@ -6,11 +6,13 @@ float min_v = 7; // Prevent boids from becoming stuck anywhere by setting a low 
 float max_v = 10;
 
 float w_fc = .01; // weight for flock centering
-float w_vm = .0001; // weight for velocity matching
+float w_vm = .00005; // weight for velocity matching
 float w_ca = 3; // weight for collision avoidance
 float w_wa = 25; // weight for wall avoidance
-float w_w = 10;  // weight for wander
+float w_w = 15;  // weight for wander
 float w_m = .001; // weight for mouse attraction/repulsion.
+float w_flee = .01; // weight for chase
+float w_chase = .01; // weight for flee
 
 class Boid {
   point p;    // point x, y at center
@@ -119,7 +121,6 @@ class Flock {
   
   // Spawn a random boid.
   Boid spawn(String species) {
-    if (orange_flock.size() + blue_flock.size() + grey_flock.size() >= 100) return null;
     switch (species) {
       case "Blue":
         Blue b = new Blue();
@@ -209,18 +210,29 @@ class Flock {
     float sum_wfc = 0;
     vector f_vm = v(0, 0); // velocity matching
     vector f_ca = v(0, 0); // collision avoidance
+    vector f_flee = v(0, 0); // flee predator (Grey)
+    vector f_chase = v(0, 0); // chase prey (Blue, Orange)
     
     for (Boid n: neighbors(b)) {
-      float w_fc = weight_fc(n, b);
-      sum_wfc += w_fc;
-      sum_fc = sum(sum_fc, prod(sum(n.p, i(b.p)), w_fc)); // sum_fc += w(pi - p)
-      f_vm = sum(f_vm, prod(sum(n.v, i(b.v)), weight_vm(n, b)));     // f_vm += w(vi - v)
+      boolean same_species = (b.getClass() == n.getClass());
+      
+      if (same_species) {
+        // Only flock with members of the same species.
+        float w_fc = weight_fc(n, b);
+        sum_wfc += w_fc;
+        sum_fc = sum(sum_fc, prod(sum(n.p, i(b.p)), w_fc));            // sum_fc += w(pi - p)
+        f_vm = sum(f_vm, prod(sum(n.v, i(b.v)), weight_vm(n, b)));     // f_vm += w(vi - v)
+      }
+      else if (n instanceof Grey || b instanceof Grey) {
+        // Predation
+        
+      }
       f_ca = sum(f_ca, prod(sum(b.p, i(n.p)), weight_ca(n, b)));     // f_ca += w(p - pi)
     }
     
     sum_wfc = max(sum_wfc, .001); // Ensure against division by 0.
     vector f_fc = prod(sum_fc, 1 / sum_wfc); // flock centering
-    vector f_w = v(random(-.1, .1), random(-.1, .1)); // wander
+    vector f_w = v(random(-.05, .05), random(-.05, .05)); // wander
     
     if (flock_centering)     f = sum(f, prod(f_fc, w_fc));
     if (velocity_matching)   f = sum(f, prod(f_vm, w_vm));
@@ -288,7 +300,8 @@ class Flock {
     // Boids' radius is part of the distance, 
     // and if they are within eachothers' radius they are overlapping.
     float d = max(d(a.p, b.p) - (a.r + b.r), .0001); 
-    return 1./sq(d);
+    if (d < boid_p/2.) return 1./sq(d); // Collision perception is 1/2 other perception.
+    else return .0001;
   }
   
   // Weighting velocity matching by distance.
