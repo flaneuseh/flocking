@@ -4,8 +4,8 @@ class vector {
   
   // Random vector
   vector() {
-    x = random(min_v, max_v);
-    y = random(min_v, max_v);
+    x = random(-max_v, max_v);
+    y = random(-max_v, max_v);
   }
   
   vector(float x, float y) {

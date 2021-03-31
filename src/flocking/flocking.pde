@@ -26,19 +26,21 @@
 // ## Custom Commands:
 // * right mouse held down - do the opposite of the left mouse (repulsion in attraction mode, attraction in repulsion mode)
 // 
-// TODO:
+// ### Extras:
+// * Functional GUI
+// * Multiple boid species:
+//   - "Active" species controls what species appear on screen (inactive species don't affect the simulation)
+//   - "+/-" species is the species that the "spawn" and "kill" buttons (or +/- keys) control the population of.
+//   - Initially there are no blue or grey boids, those must be activated and added to to use.
+//   - Blue boids don't flock with orange boids but otherwise don't behave differently.
+//   - Grey boids are bigger and chase blue and orange boids. Blue and orange boids flee them, for a predator/prey dynamic.
 // 
+// FUTURE IDEAS:
 // * Implement 3D flocking.
-// * Introduce a predator that chases after your flocking creatures and eats them.
-// * Add on-screen widgets that control the simulation.
+// * Allow predators to eat prey.
 // * Include fixed collision objects for the creatures to steer around.
 // * food/resources/shelter
-// * another species of non predatory boids.
 // * Use a grid or Voronoi/Dalauney triangles to only consider the closest neighborhood of boids.
-// * ### Custom Commands:
-// 
-// * left click (or s?) - spawn a boid at the mouse's position
-// * right click (or k?) - delete the boid at the mouse's position
 // * boid colour variation
 // 
 
@@ -380,18 +382,22 @@ void keyPressed() {
     case '1':
       flock_centering = !flock_centering;
       println("Toggle flock centering " + (flock_centering? "on" : "off"));
+      println("Flock centering: " + (flock_centering? "on":"off") + "; velocity matching: " + (velocity_matching? "on":"off") + "; collision avoidance: " + (collision_avoidance? "on" : "off") + "; wander: " + (wander? "on" : "off"));
       break;
     case '2':
       velocity_matching = !velocity_matching;
       println("Toggle velocity matching " + (velocity_matching? "on" : "off"));
+      println("Flock centering: " + (flock_centering? "on":"off") + "; velocity matching: " + (velocity_matching? "on":"off") + "; collision avoidance: " + (collision_avoidance? "on" : "off") + "; wander: " + (wander? "on" : "off"));
       break;
     case '3':
       collision_avoidance = !collision_avoidance;
       println("Toggle collision avoidance " + (collision_avoidance? "on" : "off"));
+      println("Flock centering: " + (flock_centering? "on":"off") + "; velocity matching: " + (velocity_matching? "on":"off") + "; collision avoidance: " + (collision_avoidance? "on" : "off") + "; wander: " + (wander? "on" : "off"));
       break;
     case '4':
       wander = !wander;
       println("Toggle wander " + (wander? "on" : "off"));
+      println("Flock centering: " + (flock_centering? "on":"off") + "; velocity matching: " + (velocity_matching? "on":"off") + "; collision avoidance: " + (collision_avoidance? "on" : "off") + "; wander: " + (wander? "on" : "off"));
       break;
     case '+':
     case '=':

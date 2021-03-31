@@ -5,9 +5,9 @@ float boid_p = boid_r * 30;  // radius of boid perception
 float min_v = 7; // Prevent boids from becoming stuck anywhere by setting a low minimum velocity to help them to jiggle out of place.
 float max_v = 10;
 
-float w_fc = .7; // weight for flock centering
-float w_vm = .00005; // weight for velocity matching
-float w_ca = 1; // weight for collision avoidance
+float w_fc = 1; // weight for flock centering
+float w_vm = .00002; // weight for velocity matching
+float w_ca = 2; // weight for collision avoidance
 float w_wa = 35; // weight for wall avoidance
 float w_w = 10;  // weight for wander
 float w_m = .001; // weight for mouse attraction/repulsion.
@@ -145,11 +145,11 @@ class Flock {
         if (blue_flock.size() <= 0) return null;
         return blue_flock.remove(floor(random(blue_flock.size())));
       case "Grey":
-        if (blue_flock.size() <= 0) return null;
+        if (grey_flock.size() <= 0) return null;
         return grey_flock.remove(floor(random(grey_flock.size())));
       case "Orange":
       default:
-        if (blue_flock.size() <= 0) return null;
+        if (orange_flock.size() <= 0) return null;
         return orange_flock.remove(floor(random(orange_flock.size())));
     }
   }
@@ -157,6 +157,7 @@ class Flock {
   void scatter() {
     for (Boid b : all()) {
       b.p = random_valid_point(b.r);
+      b.v = v();
     }
   }
   
@@ -185,6 +186,7 @@ class Flock {
     vector f = calculate_forces(b);
     b.v = sum(b.v, prod(f, dt));
     
+    // Limit velocity magnitude
     float m = m(b.v);
     if (m < min_v) {
       b.v = prod(u(b.v), min_v);
@@ -317,7 +319,7 @@ class Flock {
   float weight_ca(Boid a, Boid b) {
     // Boids' radius is part of the distance, 
     // and if they are within eachothers' radius they are overlapping.
-    float d = max(d(a.p, b.p) - (a.r + b.r)/2, .0001); 
+    float d = max(d(a.p, b.p) - (a.r + b.r)/2., .0001); 
     if (d < boid_p/2.) return 1./sq(d); // Collision perception is 1/2 other perception.
     else return .0001;
   }
